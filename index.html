@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="The Atmospherium — a universal, atmospheric prompt builder for Midjourney, Stable Diffusion, Flux, ChatGPT, Gemini, Ideogram, Firefly, Leonardo and any other image generator.">
+<meta name="theme-color" content="#EDE4D3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17121D" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Atmospherium">
+<title>The Atmospherium — Prompt Enhancer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EDE4D3; --bg-panel:#F8F2E6; --bg-well:#E2D6BF;
+    --text:#2B2116; --text-muted:#766652;
+    --accent:#A6453A; --accent-2:#4C6B52;
+    --border:rgba(43,33,22,0.16); --shadow:rgba(43,33,22,0.14); --focus:#A6453A;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17121D; --bg-panel:#211A2A; --bg-well:#2A2135;
+      --text:#EEE4D6; --text-muted:#AC9C8B;
+      --accent:#DCA24C; --accent-2:#86A68C;
+      --border:rgba(238,228,214,0.14); --shadow:rgba(0,0,0,0.45); --focus:#DCA24C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17121D; --bg-panel:#211A2A; --bg-well:#2A2135;
+    --text:#EEE4D6; --text-muted:#AC9C8B;
+    --accent:#DCA24C; --accent-2:#86A68C;
+    --border:rgba(238,228,214,0.14); --shadow:rgba(0,0,0,0.45); --focus:#DCA24C;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height:100vh;
+    padding:40px max(20px, env(safe-area-inset-right)) 70px max(20px, env(safe-area-inset-left));
+    transition:background .3s ease, color .3s ease;
+  }
+  .wrap{ max-width:780px; margin:0 auto; }
+  button{ font-family:inherit; }
+
+  header{ margin-bottom:34px; position:relative; }
+  .eyebrow{ color:var(--accent-2); font-size:13px; letter-spacing:.02em; margin:0 0 6px; }
+  h1{
+    font-family:'Fraunces', Georgia, serif; font-style:italic; font-weight:500;
+    font-size:clamp(34px, 6vw, 50px); line-height:1.05; margin:0 0 12px; letter-spacing:-.01em;
+  }
+  header p{ color:var(--text-muted); font-size:15.5px; line-height:1.55; max-width:56ch; margin:0; }
+  .theme-btn{
+    position:absolute; top:0; right:0;
+    width:38px; height:38px; border-radius:50%;
+    border:1px solid var(--border); background:var(--bg-panel); color:var(--text);
+    cursor:pointer; font-size:16px;
+  }
+
+  section{ margin-bottom:30px; }
+  .label-row{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+  .section-title{ font-family:'Fraunces', Georgia, serif; font-style:italic; font-weight:500; font-size:19px; margin:0; }
+  .hint{ color:var(--text-muted); font-size:13px; }
+
+  .card{
+    background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:14px; box-shadow:0 2px 10px var(--shadow);
+  }
+
+  /* subject */
+  .subject-card{ padding:14px 14px 14px 20px; display:flex; align-items:center; gap:10px; }
+  .subject-card input{
+    flex:1; min-width:0; border:none; background:transparent; outline:none;
+    font-family:'Fraunces', Georgia, serif; font-style:italic; font-size:22px;
+    color:var(--text); padding:2px 0;
+  }
+  .subject-card input::placeholder{ color:var(--text-muted); opacity:.7; }
+
+  /* pills */
+  .pills{ display:flex; flex-wrap:wrap; gap:10px; }
+  .pill{
+    font-size:13.5px; font-weight:600; padding:9px 15px; border-radius:999px;
+    border:1px solid var(--border); background:var(--bg-panel); color:var(--text);
+    cursor:pointer; transition:transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .pill:hover{ transform:translateY(-1px); }
+  .pill.active{ background:var(--accent); border-color:var(--accent); color:var(--bg-panel); }
+  .pill.chaos{ border-style:dashed; }
+  .pill.small{ font-size:12.5px; padding:7px 12px; }
+  .target-note{ margin-top:10px; font-size:13px; color:var(--text-muted); line-height:1.5; }
+
+  /* ingredients */
+  .ingredients{ overflow:hidden; }
+  .ingredient-row{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px 12px 18px; border-bottom:1px solid var(--border);
+  }
+  .ingredient-row:last-child{ border-bottom:none; }
+  .ing-tag{
+    flex:0 0 84px; font-size:12px; color:var(--text-muted); text-transform:lowercase;
+    background:none; border:none; text-align:left; padding:4px 0; cursor:pointer;
+  }
+  .ing-tag:hover{ color:var(--text); }
+  .ingredient-row.off .ing-tag{ text-decoration:line-through; }
+  .ingredient-row.off .ing-phrase{ opacity:.35; text-decoration:line-through; }
+  .ing-phrase{
+    flex:1 1 auto; min-width:0; font-size:15.5px; line-height:1.4;
+    border-radius:6px; padding:3px 6px; margin:-3px -6px; outline:none;
+  }
+  .ing-phrase:focus{ background:var(--bg-well); box-shadow:0 0 0 2px var(--focus); }
+  .row-btn{
+    flex:0 0 auto; width:34px; height:34px; border-radius:9px;
+    border:1px solid var(--border); background:var(--bg-well); color:var(--text);
+    cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center;
+    transition:transform .35s cubic-bezier(.34,1.56,.64,1), background .15s ease;
+  }
+  .row-btn:hover{ background:var(--accent); color:var(--bg-panel); }
+  .row-btn.locked{ background:var(--accent-2); color:var(--bg-panel); border-color:var(--accent-2); }
+  .row-btn.spin{ transform:rotate(300deg); }
+  @media (prefers-reduced-motion: reduce){
+    .row-btn, .pill{ transition:none; }
+    .row-btn.spin{ transform:none; }
+  }
+  .under-row{ margin-top:10px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .text-btn{
+    background:none; border:none; cursor:pointer; font-size:13.5px; font-weight:600;
+    color:var(--accent-2); padding:6px 2px;
+  }
+  .text-btn:hover{ text-decoration:underline; }
+
+  /* params */
+  .params{ display:flex; flex-wrap:wrap; gap:16px 18px; padding:16px 20px; align-items:flex-end; }
+  .param{ display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--text-muted); }
+  .param select, .param input[type="text"]{
+    font-family:inherit; font-size:14px; color:var(--text);
+    background:var(--bg-well); border:1px solid var(--border); border-radius:8px; padding:7px 10px;
+  }
+  .param.wide{ flex:1 1 100%; }
+  .param.wide input{ width:100%; }
+  .param.check{ flex-direction:row; align-items:center; gap:8px; padding-bottom:8px; }
+  .param.check label{ color:var(--text); font-size:14px; }
+  [hidden]{ display:none !important; }
+
+  /* output */
+  .output-card{ background:var(--bg-well); border:1px solid var(--border); border-radius:14px; padding:20px 22px; box-shadow:0 2px 10px var(--shadow); }
+  .out-label{ font-size:12px; color:var(--text-muted); margin:0 0 6px; text-transform:lowercase; }
+  .output-text{ font-size:15.5px; line-height:1.6; min-height:3.2em; white-space:pre-wrap; word-break:break-word; }
+  .neg-block{ margin-top:16px; padding-top:14px; border-top:1px dashed var(--border); }
+  .neg-block .output-text{ min-height:0; font-size:14.5px; color:var(--text-muted); }
+  .meta-line{ margin-top:12px; font-size:13px; color:var(--text-muted); }
+  .output-actions{ margin-top:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .copy-btn{
+    font-weight:700; font-size:14px; padding:10px 18px; border-radius:999px; border:none;
+    background:var(--accent); color:var(--bg-panel); cursor:pointer; transition:transform .15s ease;
+  }
+  .copy-btn.ghost{ background:transparent; color:var(--text); border:1px solid var(--border); }
+  .copy-btn:hover{ transform:translateY(-1px); }
+  .copy-feedback{ font-size:13px; color:var(--accent-2); font-weight:600; opacity:0; transition:opacity .25s ease; }
+  .copy-feedback.show{ opacity:1; }
+  .counter{ margin-left:auto; font-size:12px; color:var(--text-muted); }
+
+  /* history */
+  .history{ list-style:none; margin:0; padding:0; }
+  .history li{ border-bottom:1px solid var(--border); }
+  .history li:last-child{ border-bottom:none; }
+  .history button.h-item{
+    width:100%; text-align:left; background:none; border:none; color:var(--text);
+    padding:12px 18px; cursor:pointer; font-size:13.5px; line-height:1.45;
+    display:flex; gap:10px; align-items:baseline;
+  }
+  .history button.h-item:hover{ background:var(--bg-well); }
+  .h-badge{ flex:0 0 auto; font-size:11px; color:var(--accent-2); font-weight:700; }
+  .h-text{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .empty{ padding:14px 18px; font-size:13.5px; color:var(--text-muted); }
+
+  footer{ margin-top:40px; text-align:center; color:var(--text-muted); font-size:12.5px; line-height:1.7; }
+  kbd{ font-family:inherit; font-size:11.5px; border:1px solid var(--border); border-radius:4px; padding:1px 5px; background:var(--bg-panel); }
+  :focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+  @media (max-width:480px){
+    .ing-tag{ flex-basis:60px; }
+    .ingredient-row{ gap:8px; padding-left:14px; }
+    .row-btn{ width:32px; height:32px; }
+    .params{ gap:12px; }
+    .counter{ margin-left:0; width:100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle colour theme" title="Theme: auto">◐</button>
+    <p class="eyebrow">a small apparatus for brewing image prompts</p>
+    <h1>The Atmospherium</h1>
+    <p>Type in a subject, pick a vibe, choose where the prompt is going, and turn the dials until the mood is right. Each row draws from a different jar — mood, light, palette, texture, motif, lens, finish and one strange little detail. The prompt is shaped to suit whichever image generator you use.</p>
+  </header>
+
+  <section>
+    <div class="card subject-card">
+      <input id="subjectInput" type="text" placeholder="a lighthouse keeper's cat" autocomplete="off" spellcheck="false" aria-label="Subject">
+      <button class="row-btn" id="subjectDice" aria-label="Random subject" title="Random subject">🎲</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="label-row">
+      <h2 class="section-title">Choose a vibe</h2>
+      <span class="hint" id="vibeHint"></span>
+    </div>
+    <div class="pills" id="vibeRow"></div>
+  </section>
+
+  <section>
+    <div class="label-row">
+      <h2 class="section-title">The brew</h2>
+      <span class="hint">tap text to edit · 🔒 to keep · tap a label to leave it out</span>
+    </div>
+    <div class="card ingredients" id="ingredientList"></div>
+    <div class="under-row">
+      <button class="text-btn" id="unlockAllBtn">unlock all</button>
+      <button class="text-btn" id="rerollAllBtn">reroll everything ↺</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="label-row">
+      <h2 class="section-title">Where is it going?</h2>
+    </div>
+    <div class="pills" id="targetRow"></div>
+    <p class="target-note" id="targetNote"></p>
+  </section>
+
+  <section>
+    <div class="label-row">
+      <h2 class="section-title">Rendering parameters</h2>
+    </div>
+    <div class="card params">
+      <div class="param">
+        <label for="arSelect">aspect ratio</label>
+        <select id="arSelect">
+          <option value="1:1">1:1 — square</option>
+          <option value="4:5">4:5 — social portrait</option>
+          <option value="2:3">2:3 — portrait</option>
+          <option value="9:16">9:16 — tall / phone</option>
+          <option value="3:2">3:2 — landscape</option>
+          <option value="16:9" selected>16:9 — wide</option>
+          <option value="21:9">21:9 — cinematic</option>
+        </select>
+      </div>
+      <div class="param">
+        <label for="lengthSelect">prompt length</label>
+        <select id="lengthSelect">
+          <option value="short">short — essentials</option>
+          <option value="standard" selected>standard</option>
+          <option value="rich">rich — every jar</option>
+        </select>
+      </div>
+
+      <!-- Midjourney -->
+      <div class="param" data-for="midjourney">
+        <label for="versionSelect">version</label>
+        <select id="versionSelect">
+          <option value="8.2" selected>V8.2 — default</option>
+          <option value="8.1">V8.1</option>
+          <option value="7">V7</option>
+          <option value="">don't specify</option>
+        </select>
+      </div>
+      <div class="param" data-for="midjourney">
+        <label for="stylizeSelect">stylize</label>
+        <select id="stylizeSelect">
+          <option value="50">50 — literal</option>
+          <option value="100" selected>100 — default</option>
+          <option value="250">250 — balanced</option>
+          <option value="500">500 — artistic</option>
+          <option value="750">750 — painterly</option>
+          <option value="1000">1000 — maximal</option>
+        </select>
+      </div>
+      <div class="param" data-for="midjourney">
+        <label for="chaosSelect">chaos</label>
+        <select id="chaosSelect">
+          <option value="0" selected>0 — tame</option>
+          <option value="25">25 — a little wild</option>
+          <option value="50">50 — unpredictable</option>
+          <option value="75">75 — feral</option>
+        </select>
+      </div>
+      <div class="param" data-for="midjourney">
+        <label for="weirdSelect">weird</label>
+        <select id="weirdSelect">
+          <option value="0" selected>0 — off</option>
+          <option value="250">250 — odd</option>
+          <option value="1000">1000 — uncanny</option>
+        </select>
+      </div>
+      <div class="param check" data-for="midjourney">
+        <input type="checkbox" id="rawCheck">
+        <label for="rawCheck">--raw</label>
+      </div>
+
+      <!-- Stable Diffusion family -->
+      <div class="param check" data-for="sd leonardo">
+        <input type="checkbox" id="qualityCheck" checked>
+        <label for="qualityCheck">add quality tags</label>
+      </div>
+      <div class="param check" data-for="sd">
+        <input type="checkbox" id="weightCheck" checked>
+        <label for="weightCheck">weight the subject</label>
+      </div>
+
+      <div class="param wide" data-neg>
+        <label for="avoidInput">avoid (negative prompt)</label>
+        <input type="text" id="avoidInput" placeholder="text, watermark, extra fingers…" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label-row">
+      <h2 class="section-title">Your prompt</h2>
+      <span class="hint" id="targetBadge"></span>
+    </div>
+    <div class="output-card">
+      <p class="out-label">prompt</p>
+      <div class="output-text" id="outputText"></div>
+      <div class="neg-block" id="negBlock" hidden>
+        <p class="out-label">negative prompt</p>
+        <div class="output-text" id="negText"></div>
+      </div>
+      <p class="meta-line" id="metaLine" hidden></p>
+      <div class="output-actions">
+        <button class="copy-btn" id="copyBtn">Copy prompt</button>
+        <button class="copy-btn ghost" id="copyNegBtn" hidden>Copy negative</button>
+        <button class="copy-btn ghost" id="shareBtn">Copy share link</button>
+        <span class="copy-feedback" id="copyFeedback" role="status" aria-live="polite"></span>
+        <span class="counter" id="counter"></span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label-row">
+      <h2 class="section-title">Recent brews</h2>
+      <button class="text-btn" id="clearHistoryBtn">clear</button>
+    </div>
+    <div class="card"><ul class="history" id="historyList"></ul></div>
+  </section>
+
+  <footer>
+    brew responsibly. reroll often.<br>
+    <kbd>R</kbd> reroll · <kbd>C</kbd> copy · <kbd>S</kbd> random subject
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- the jars ---------- */
+  const VIBES = {
+    whimsical: {
+      label:"Whimsical Wonder",
+      mood:["giddy and enchanted","playfully mischievous","sun-warmed and carefree","gently magical","bubbling with delight","cosy and wide-eyed"],
+      lighting:["dappled sunlight through leaves","candy-coloured glow at dusk","sparkling fairy-light shimmer","warm honeyed afternoon light","soft glow from paper lanterns","rainbow light through a prism window"],
+      palette:["buttercup yellow and sky blue","bubblegum pink and mint","marigold and periwinkle","peach and lavender pastels","cherry red and cream","lemon sherbet and teal"],
+      texture:["fluffy spun-sugar clouds","polished wooden toy grain","soft knitted wool","shiny candy-glass surfaces","crinkled tissue-paper folds","felt and button appliqué"],
+      motif:["storybook picture-book illustration","handmade puppet-theatre backdrop","vintage children's board game art","pop-up book paper craft scene","carousel carnival poster","claymation stop-motion set"],
+      quirky:["a teapot pouring butterflies","mushrooms wearing tiny hats","a snail carrying a lantern","buttons sewn into constellations","a fox reading a book upside-down","a kite tethered to a cloud"]
+    },
+    eerie: {
+      label:"Eerie Liminal",
+      mood:["quietly unsettling","hollow and half-remembered","watchfully still","unnervingly calm","suspended in a held breath","empty in a way that hums"],
+      lighting:["flickering fluorescent hum","sodium-vapour orange glow","light with no visible source","long shadows at high noon","a single bulb swaying overhead","the blue glow of a television left on"],
+      palette:["faded mint and beige","sickly yellow and grey","bleached institutional white","dull teal and rust","washed-out lilac","nicotine yellow and olive"],
+      texture:["water-stained ceiling tiles","peeling laminate veneer","static-charged carpet fibres","dust settled on untouched surfaces","scuffed linoleum floor","fogged acrylic glass"],
+      motif:["found-footage photograph","abandoned mall directory sign","1980s instructional filmstrip still","forgotten motel postcard","analogue horror VHS still","disposable-camera flash snapshot"],
+      quirky:["a hallway with too many doors","a clock with no hands","an exit sign pointing inward","a vending machine humming alone","footprints that stop mid-room","a swimming pool with no water"]
+    },
+    gothic: {
+      label:"Gothic Romance",
+      mood:["melancholic and grand","tenderly decaying","reverent and hushed","brooding and theatrical","aching with longing","solemn and candle-lit"],
+      lighting:["candlelight through stained glass","moonlight pooling on wet stone","storm-light through tall windows","torchlight along a stone corridor","dying embers in a hearth","lightning frozen behind lace curtains"],
+      palette:["bruised plum and gold","wine red and charcoal","tarnished silver and black","deep emerald and bone","midnight blue and rust","ivory and oxblood"],
+      texture:["cracked marble veining","frayed velvet upholstery","rusted wrought-iron filigree","cobweb-draped chandelier crystal","water-damaged tapestry thread","melted wax pooling on brass"],
+      motif:["baroque oil painting with chiaroscuro","Victorian mourning photograph","crumbling cathedral fresco","gothic revival architectural etching","illuminated manuscript marginalia","Pre-Raphaelite portrait"],
+      quirky:["a chess set frozen mid-battle","a raven perched on a marble bust","portraits whose eyes seem to follow","a music box that won't stop","roses growing through iron bars","a letter sealed with black wax"]
+    },
+    solarpunk: {
+      label:"Solarpunk Bloom",
+      mood:["hopeful and industrious","sunlit and communal","quietly thriving","gently optimistic","alive with growth","calm and abundant"],
+      lighting:["clean morning sunlight","light filtered through greenhouse glass","golden late-afternoon glow","soft bioluminescent garden glow","light dappling through solar panels","bright overcast after rain"],
+      palette:["moss green and terracotta","sky blue and sunflower yellow","clay orange and leaf green","coral pink and jade","warm sand and turquoise","sage and copper"],
+      texture:["woven bamboo lattice","sun-warmed terracotta clay","a living moss wall","polished recycled glass","hand-thrown ceramic glaze","weathered cedar shingles"],
+      motif:["utopian eco-city concept art","botanical greenhouse blueprint","community mural illustration","1970s ecological poster design","hand-drawn permaculture diagram","Art Nouveau botanical print"],
+      quirky:["vines climbing a wind turbine","a market stall shaded by solar sails","bicycles woven with flowers","rooftop beehives at sunrise","children planting trees on a rooftop","a tram with a garden on its roof"]
+    },
+    neon: {
+      label:"Neon Feral",
+      mood:["restless and electric","defiant and untamed","wired and wary","hungry for motion","static with tension","sleepless and buzzing"],
+      lighting:["neon sign reflections on wet asphalt","harsh strobe flicker","cyan and magenta glow","headlight glare through rain","flickering hologram light","UV blacklight glow"],
+      palette:["acid green and hot magenta","electric blue and black","chrome silver and violet","toxic yellow and teal","blood orange and cyan","ultraviolet and pink"],
+      texture:["scratched chrome plating","cracked asphalt sheen","a static-fuzzed CRT screen","graffiti-layered concrete","an oil-slick rainbow sheen","rain-beaded vinyl"],
+      motif:["cyberpunk back-alley signage","retro arcade cabinet art","glitch-art digital collage","dystopian street-level poster","synthwave album cover","anime cel still from a late-night city chase"],
+      quirky:["a stray cat with cybernetic eyes","vending machines that whisper","wires tangled like vines","a payphone that still rings","drones roosting like pigeons","a noodle stall under a giant hologram koi"]
+    },
+    noir: {
+      label:"Rain-Soaked Noir",
+      mood:["tense and smoky","world-weary and secretive","hard-boiled and quiet","fatalistic and cool","loaded with unspoken threat"],
+      lighting:["venetian-blind shadows across a face","a lone streetlamp in heavy rain","hard key light with deep shadow","cigarette-ember glow","headlights cutting through fog"],
+      palette:["high-contrast black and white","charcoal with a single red accent","inky blue and silver","tobacco brown and slate","monochrome with a sodium-amber tint"],
+      texture:["rain-slick cobblestones","wrinkled trench-coat wool","smoke curling through still air","frosted office-door glass","worn leather and brass"],
+      motif:["1940s film noir still","pulp detective paperback cover","hard-boiled graphic novel panel","black-and-white press photograph","neo-noir cinematic frame"],
+      quirky:["a fedora on an empty chair","a phone off the hook","a name painted backwards on a door","a matchbook from a closed club","a single glove on the stairs"]
+    },
+    cosmic: {
+      label:"Cosmic Reverie",
+      mood:["vast and awestruck","serene and infinite","dreamlike and weightless","ancient and humming","lonely but luminous"],
+      lighting:["nebula glow from below","starlight with a soft lens bloom","aurora ribbons overhead","the rim of an eclipse","bioluminescent shimmer in zero gravity"],
+      palette:["deep indigo and gold","violet and teal nebula hues","obsidian and pearl","magenta and cobalt","silver and sapphire"],
+      texture:["stardust particles","iridescent nacre","glassy obsidian","swirling gas clouds","frosted comet ice"],
+      motif:["retro sci-fi paperback cover","astronomical plate engraving","1970s space-age concept painting","visionary airbrushed art","deep-space telescope photograph"],
+      quirky:["a staircase ending among the stars","a whale drifting past planets","a lighthouse on a tiny moon","constellations rearranging into a face","a garden growing on an asteroid"]
+    },
+    analog: {
+      label:"Analogue Summer",
+      mood:["nostalgic and sun-drunk","lazy and golden","bittersweet and warm","carefree and youthful","hazy with memory"],
+      lighting:["late-summer golden hour","harsh midday sun and lens flare","warm light through net curtains","sunset over a parking lot","camera flash at a backyard party"],
+      palette:["faded orange and teal","sun-bleached pastels","mustard, brown and avocado","Kodachrome reds and blues","cream and burnt sienna"],
+      texture:["sun-faded paint","cracked vinyl seats","chlorine-blue pool tiles","wood-panelled walls","shag carpet"],
+      motif:["1970s Kodachrome snapshot","vintage travel brochure","Polaroid instant photo","1980s department-store catalogue","family slide-projector photo"],
+      quirky:["a melting ice lolly on a dashboard","a garden sprinkler mid-arc","a cassette tape on the car seat","an inflatable flamingo adrift","a dog asleep under a lawn chair"]
+    },
+    nordic: {
+      label:"Nordic Calm",
+      mood:["still and contemplative","clean and quietly hopeful","hushed and spacious","restful and unhurried","cool and clear-headed"],
+      lighting:["flat overcast daylight","low winter sun across snow","blue-hour twilight","soft window light on pale wood","candles in a dark room"],
+      palette:["birch white and slate","fog grey and sage","oatmeal and charcoal","glacier blue and sand","black and natural linen"],
+      texture:["pale oak grain","washed linen","smooth river stone","fresh powder snow","matte stoneware"],
+      motif:["minimalist architectural photograph","Scandinavian design-magazine spread","quiet landscape painting","Japandi interior shot","clean editorial still life"],
+      quirky:["a single chair facing the sea","a red cabin in a white field","steam rising from a cup by the window","a lone boat on still water","a fox's footprints across a frozen lake"]
+    }
+  };
+
+  const LENS = ["macro lens catching every fibre","wide-angle lens with gentle edge distortion","soft focus with a dreamy vignette","tilt-shift miniature effect","long-exposure light trails","double-exposure ghosting","deep depth of field","fisheye lens warp","medium-format stillness","85mm portrait lens with creamy bokeh","low-angle hero shot","overhead flat-lay composition"];
+  const FINISH = ["visible film grain and light leaks","hyperdetailed linework","painterly visible brushwork","intricate ornamental detail","luminous rim lighting","an immaculate symmetrical composition","rule-of-thirds composition","volumetric light rays","subtle chromatic aberration","crisp high-resolution detail"];
+
+  const SUBJECTS = ["a lighthouse keeper's cat","an old clockmaker at his bench","a fox in a train station","a greenhouse on a rooftop","a girl with a paper kite","a library at the edge of the sea","an abandoned observatory","a tea house in the rain","a robot gardener","a ballerina backstage","a night market","a boy and his dragon kite","a vintage diner at closing time","a tram crossing a bridge","an owl postmaster","a beekeeper at dawn","a ferris wheel in fog","a violinist on a rooftop","a mapmaker's desk","a houseboat on a canal"];
+
+  const ROWS = ["mood","lighting","palette","texture","motif","lens","finish","quirky"];
+  const ROW_LABELS = { mood:"mood", lighting:"light", palette:"palette", texture:"texture", motif:"motif", lens:"lens", finish:"finish", quirky:"detail" };
+  const SHORT_ROWS = ["mood","lighting","palette","motif"];
+  const STANDARD_ROWS = ["mood","lighting","palette","texture","motif","lens","quirky"];
+
+  /* ---------- the targets ---------- */
+  const TARGETS = {
+    universal:{ label:"Universal", style:"prose", neg:"inline",
+      note:"Plain descriptive sentences that any generator understands. Paste it anywhere." },
+    midjourney:{ label:"Midjourney", style:"keywords", neg:"param",
+      note:"Comma-separated description with parameters appended. V8.2 is the current default model; things to avoid go in --no." },
+    sd:{ label:"Stable Diffusion / SDXL", style:"weighted", neg:"separate",
+      note:"Weighted tags plus a separate negative prompt, for Automatic1111, Forge, ComfyUI or DreamStudio. A suggested SDXL resolution is shown." },
+    flux:{ label:"Flux", style:"prose", neg:"none",
+      note:"Flux reads natural language well and has no negative prompt. Describe what you want, not what you don't." },
+    chatgpt:{ label:"ChatGPT / GPT Image", style:"prose", neg:"inline", lead:"Create an image of ",
+      note:"Written as a request in full sentences. The aspect ratio is stated in words so ChatGPT picks a matching size." },
+    gemini:{ label:"Gemini / Imagen", style:"prose", neg:"inline", lead:"Generate an image of ",
+      note:"Natural-language request for Gemini (including Nano Banana) and Imagen, with the aspect ratio stated in words." },
+    ideogram:{ label:"Ideogram", style:"prose", neg:"separate",
+      note:"Descriptive prose. Set the aspect ratio in Ideogram's toolbar; the negative prompt goes in its own field." },
+    firefly:{ label:"Adobe Firefly", style:"prose", neg:"inline",
+      note:"Descriptive prose. Set the aspect ratio and content type (photo or art) in Firefly's panel." },
+    leonardo:{ label:"Leonardo", style:"keywords", neg:"separate",
+      note:"Keyword-style prompt with a separate negative prompt. Set dimensions in Leonardo's sidebar." }
+  };
+
+  const AR_WORDS = {
+    "1:1":"square 1:1 format", "4:5":"vertical 4:5 portrait format", "2:3":"vertical 2:3 portrait format",
+    "9:16":"tall vertical 9:16 format", "3:2":"horizontal 3:2 landscape format",
+    "16:9":"wide 16:9 landscape format", "21:9":"ultra-wide 21:9 cinematic format"
+  };
+  const SDXL_SIZES = { "1:1":"1024 × 1024", "4:5":"896 × 1152", "2:3":"832 × 1216", "9:16":"768 × 1344", "3:2":"1216 × 832", "16:9":"1344 × 768", "21:9":"1536 × 640" };
+  const SD_QUALITY_POS = "highly detailed, sharp focus, best quality";
+  const SD_QUALITY_NEG = "lowres, blurry, jpeg artifacts, watermark, signature, text, deformed, bad anatomy, extra fingers";
+
+  /* ---------- state ---------- */
+  const state = {
+    vibeKey:"gothic",
+    target:"universal",
+    values:{}, locked:{}, off:{},
+    subject:""
+  };
+
+  const $ = id => document.getElementById(id);
+  const randomFrom = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  function pool(rowKey){
+    if(rowKey === "lens") return LENS;
+    if(rowKey === "finish") return FINISH;
+    if(state.vibeKey === "chaos") return Object.values(VIBES).flatMap(v => v[rowKey]);
+    return VIBES[state.vibeKey][rowKey];
+  }
+
+  function rerollRow(rowKey){
+    const p = pool(rowKey);
+    let next = randomFrom(p);
+    let guard = 0;
+    while(next === state.values[rowKey] && p.length > 1 && guard++ < 10) next = randomFrom(p);
+    state.values[rowKey] = next;
+  }
+
+  function rerollAll(){
+    ROWS.forEach(k => { if(!state.locked[k]) rerollRow(k); });
+    renderAll();
+  }
+
+  /* ---------- prompt building ---------- */
+  function activeRows(){
+    const len = $('lengthSelect').value;
+    const set = len === "short" ? SHORT_ROWS : len === "standard" ? STANDARD_ROWS : ROWS;
+    return ROWS.filter(k => set.includes(k) && !state.off[k] && (state.values[k] || "").trim());
+  }
+  const v = k => (state.values[k] || "").trim();
+  function subjectText(){ return state.subject.trim() || $('subjectInput').placeholder; }
+  function avoidList(){
+    return $('avoidInput').value.split(",").map(s => s.trim()).filter(Boolean);
+  }
+  function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+  function stripArticle(s){ return s.replace(/^(a|an|the)\s+/i, ""); }
+  function withArticle(s){ const b = stripArticle(s); return (/^[aeiou]/i.test(b) ? "an " : "a ") + b; }
+
+  function buildKeywords(weighted){
+    const rows = activeRows();
+    const subj = subjectText();
+    const parts = [weighted && $('weightCheck').checked ? `(${subj}:1.3)` : subj];
+    const map = {
+      quirky: v("quirky"),
+      mood: v("mood") + " atmosphere",
+      lighting: v("lighting"),
+      palette: v("palette") + " colour palette",
+      texture: v("texture") + " textures",
+      motif: "in the style of " + withArticle(v("motif")),
+      lens: v("lens"),
+      finish: v("finish")
+    };
+    ["quirky","mood","lighting","palette","texture","motif","lens","finish"].forEach(k => { if(rows.includes(k)) parts.push(map[k]); });
+    return parts.join(", ");
+  }
+
+  function buildProse(t){
+    const rows = activeRows();
+    const has = k => rows.includes(k);
+    const subj = subjectText();
+    const ar = $('arSelect').value;
+    let s = "";
+    const lead = TARGETS[t].lead;
+    if(has("motif")){
+      s += lead ? `${lead}${subj}, ` : `${cap(subj)}, `;
+      s += `rendered as ${withArticle(v("motif"))}`;
+    } else {
+      s += lead ? `${lead}${subj}` : cap(subj);
+    }
+    if(has("quirky")) s += `, with ${v("quirky")} in the scene`;
+    s += ". ";
+    const mood = [];
+    if(has("mood")) mood.push(`The atmosphere is ${v("mood")}`);
+    if(has("lighting")) mood.push(`${mood.length ? "lit by" : "Lit by"} ${v("lighting")}`);
+    if(mood.length) s += mood.join(", ") + ". ";
+    const look = [];
+    if(has("palette")) look.push(`${withArticle(v("palette"))} colour palette`);
+    if(has("texture")) look.push(`${v("texture")} textures`);
+    if(look.length) s += `It uses ${look.join(" and ")}. `;
+    const cam = [];
+    if(has("lens")) cam.push(v("lens"));
+    if(has("finish")) cam.push(v("finish"));
+    if(cam.length) s += cap(cam.join(", ")) + ". ";
+    if(t !== "ideogram" && t !== "firefly") s += `Composed in a ${AR_WORDS[ar]}.`;
+    const neg = TARGETS[t].neg;
+    const avoid = avoidList();
+    if(neg === "inline" && avoid.length) s += ` Avoid ${avoid.join(", ")}.`;
+    return s.replace(/\s+/g, " ").trim();
+  }
+  function dedupe(list){
+    const seen = new Set();
+    return list.filter(x => { const k = x.toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; });
+  }
+
+  function build(){
+    const t = state.target;
+    const T = TARGETS[t];
+    const ar = $('arSelect').value;
+    const avoid = avoidList();
+    let prompt = "", negative = "", meta = "";
+
+    if(t === "midjourney"){
+      prompt = buildKeywords(false);
+      let p = ` --ar ${ar}`;
+      const sty = $('stylizeSelect').value; if(sty !== "100") p += ` --stylize ${sty}`;
+      const ch = $('chaosSelect').value; if(Number(ch) > 0) p += ` --chaos ${ch}`;
+      const w = $('weirdSelect').value; if(Number(w) > 0) p += ` --weird ${w}`;
+      if($('rawCheck').checked) p += ` --raw`;
+      if(avoid.length) p += ` --no ${avoid.join(", ")}`;
+      const ver = $('versionSelect').value; if(ver) p += ` --v ${ver}`;
+      prompt += p;
+    } else if(t === "sd"){
+      prompt = buildKeywords(true);
+      if($('qualityCheck').checked) prompt += ", " + SD_QUALITY_POS;
+      negative = dedupe([...($('qualityCheck').checked ? SD_QUALITY_NEG.split(", ") : []), ...avoid]).join(", ");
+      meta = `Suggested SDXL resolution: ${SDXL_SIZES[ar]} (${ar})`;
+    } else if(t === "leonardo"){
+      prompt = buildKeywords(false);
+      if($('qualityCheck').checked) prompt += ", " + SD_QUALITY_POS;
+      negative = dedupe([...($('qualityCheck').checked ? SD_QUALITY_NEG.split(", ") : []), ...avoid]).join(", ");
+      meta = `Set the aspect ratio to ${ar} in Leonardo's sidebar.`;
+    } else {
+      prompt = buildProse(t);
+      if(T.neg === "separate") negative = avoid.join(", ");
+      if(t === "ideogram" || t === "firefly") meta = `Set the aspect ratio to ${ar} in ${T.label}.`;
+      if(t === "flux" && avoid.length) meta = "Flux has no negative prompt, so the avoid list is left out. Describe the alternative instead.";
+    }
+    return { prompt, negative, meta };
+  }
+
+  /* ---------- rendering ---------- */
+  function renderVibes(){
+    const row = $('vibeRow');
+    row.innerHTML = "";
+    Object.keys(VIBES).forEach(key => {
+      const btn = document.createElement('button');
+      btn.className = 'pill' + (state.vibeKey === key ? ' active' : '');
+      btn.textContent = VIBES[key].label;
+      btn.setAttribute('aria-pressed', state.vibeKey === key);
+      btn.addEventListener('click', () => { state.vibeKey = key; rerollAll(); });
+      row.appendChild(btn);
+    });
+    const chaosBtn = document.createElement('button');
+    chaosBtn.className = 'pill chaos' + (state.vibeKey === "chaos" ? ' active' : '');
+    chaosBtn.textContent = "🎲 Chaos Brew";
+    chaosBtn.setAttribute('aria-pressed', state.vibeKey === "chaos");
+    chaosBtn.addEventListener('click', () => { state.vibeKey = "chaos"; rerollAll(); });
+    row.appendChild(chaosBtn);
+    $('vibeHint').textContent = state.vibeKey === "chaos" ? "mixing every jar at once" : "";
+  }
+
+  function renderTargets(){
+    const row = $('targetRow');
+    row.innerHTML = "";
+    Object.keys(TARGETS).forEach(key => {
+      const btn = document.createElement('button');
+      btn.className = 'pill small' + (state.target === key ? ' active' : '');
+      btn.textContent = TARGETS[key].label;
+      btn.setAttribute('aria-pressed', state.target === key);
+      btn.addEventListener('click', () => { state.target = key; renderTargets(); renderParams(); renderOutput(); saveState(); });
+      row.appendChild(btn);
+    });
+    $('targetNote').textContent = TARGETS[state.target].note;
+  }
+
+  function renderParams(){
+    document.querySelectorAll('[data-for]').forEach(el => {
+      el.hidden = !el.dataset.for.split(" ").includes(state.target);
+    });
+    document.querySelector('[data-neg]').hidden = TARGETS[state.target].neg === "none";
+  }
+
+  function renderIngredients(){
+    const list = $('ingredientList');
+    list.innerHTML = "";
+    ROWS.forEach(rowKey => {
+      const row = document.createElement('div');
+      row.className = 'ingredient-row' + (state.off[rowKey] ? ' off' : '');
+
+      const tag = document.createElement('button');
+      tag.className = 'ing-tag';
+      tag.textContent = ROW_LABELS[rowKey];
+      tag.title = state.off[rowKey] ? "include this row" : "leave this row out";
+      tag.setAttribute('aria-pressed', !state.off[rowKey]);
+      tag.addEventListener('click', () => { state.off[rowKey] = !state.off[rowKey]; renderIngredients(); renderOutput(); saveState(); });
+
+      const phrase = document.createElement('div');
+      phrase.className = 'ing-phrase';
+      phrase.contentEditable = "true";
+      phrase.spellcheck = false;
+      phrase.setAttribute('role', 'textbox');
+      phrase.setAttribute('aria-label', ROW_LABELS[rowKey] + ' (editable)');
+      phrase.textContent = state.values[rowKey];
+      phrase.addEventListener('input', () => {
+        state.values[rowKey] = phrase.textContent;
+        state.locked[rowKey] = true;
+        lock.classList.add('locked'); lock.textContent = '🔒';
+        renderOutput();
+      });
+      phrase.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); phrase.blur(); } });
+      phrase.addEventListener('blur', saveState);
+
+      const lock = document.createElement('button');
+      lock.className = 'row-btn' + (state.locked[rowKey] ? ' locked' : '');
+      lock.textContent = state.locked[rowKey] ? '🔒' : '🔓';
+      lock.setAttribute('aria-label', (state.locked[rowKey] ? 'unlock ' : 'lock ') + ROW_LABELS[rowKey]);
+      lock.setAttribute('aria-pressed', !!state.locked[rowKey]);
+      lock.addEventListener('click', () => { state.locked[rowKey] = !state.locked[rowKey]; renderIngredients(); saveState(); });
+
+      const dice = document.createElement('button');
+      dice.className = 'row-btn';
+      dice.setAttribute('aria-label', 'reroll ' + ROW_LABELS[rowKey]);
+      dice.textContent = '⟲';
+      dice.addEventListener('click', () => {
+        rerollRow(rowKey);
+        state.locked[rowKey] = false;
+        renderIngredients(); renderOutput(); saveState();
+        const d = $('ingredientList').children[ROWS.indexOf(rowKey)].lastChild;
+        d.classList.add('spin'); setTimeout(() => d.classList.remove('spin'), 350);
+      });
+
+      row.append(tag, phrase, lock, dice);
+      list.appendChild(row);
+    });
+  }
+
+  function renderOutput(){
+    const { prompt, negative, meta } = build();
+    $('outputText').textContent = prompt;
+    $('negText').textContent = negative;
+    $('negBlock').hidden = !negative;
+    $('copyNegBtn').hidden = !negative;
+    $('metaLine').textContent = meta;
+    $('metaLine').hidden = !meta;
+    $('targetBadge').textContent = "for " + TARGETS[state.target].label;
+    const words = prompt.split(/\s+/).filter(Boolean).length;
+    $('counter').textContent = `${words} words · ${prompt.length} chars`;
+  }
+
+  function renderAll(){
+    renderVibes(); renderIngredients(); renderOutput(); saveState();
+  }
+
+  /* ---------- persistence: share link + local storage ---------- */
+  const STORE_KEY = "atmospherium.v2";
+  const HIST_KEY = "atmospherium.history";
+  const CONTROLS = ['arSelect','lengthSelect','versionSelect','stylizeSelect','chaosSelect','weirdSelect','rawCheck','qualityCheck','weightCheck','avoidInput'];
+
+  function snapshot(){
+    const c = {};
+    CONTROLS.forEach(id => { const el = $(id); c[id] = el.type === "checkbox" ? el.checked : el.value; });
+    return { s:state.subject, vb:state.vibeKey, t:state.target, val:state.values, lk:state.locked, off:state.off, c };
+  }
+  function restore(d){
+    if(!d || typeof d !== "object") return false;
+    if(typeof d.s === "string") state.subject = d.s;
+    if(d.vb && (VIBES[d.vb] || d.vb === "chaos")) state.vibeKey = d.vb;
+    if(d.t && TARGETS[d.t]) state.target = d.t;
+    if(d.val && typeof d.val === "object") ROWS.forEach(k => { if(typeof d.val[k] === "string") state.values[k] = d.val[k]; });
+    state.locked = (d.lk && typeof d.lk === "object") ? d.lk : {};
+    state.off = (d.off && typeof d.off === "object") ? d.off : {};
+    if(d.c) CONTROLS.forEach(id => {
+      if(!(id in d.c)) return;
+      const el = $(id);
+      if(el.type === "checkbox") el.checked = !!d.c[id];
+      else if(el.tagName === "SELECT"){ if([...el.options].some(o => o.value === String(d.c[id]))) el.value = d.c[id]; }
+      else el.value = String(d.c[id]);
+    });
+    $('subjectInput').value = state.subject;
+    ROWS.forEach(k => { if(!state.values[k]) rerollRow(k); });
+    return true;
+  }
+  function encode(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
+  function decode(str){ return JSON.parse(decodeURIComponent(escape(atob(str)))); }
+
+  function saveState(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(snapshot())); } catch(e){} }
+  function loadHistory(){ try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch(e){ return []; } }
+  function saveHistory(h){ try { localStorage.setItem(HIST_KEY, JSON.stringify(h)); } catch(e){} }
+
+  function addHistory(prompt){
+    let h = loadHistory().filter(x => x.p !== prompt);
+    h.unshift({ p:prompt, t:state.target, snap:snapshot(), at:Date.now() });
+    saveHistory(h.slice(0, 15));
+    renderHistory();
+  }
+  function renderHistory(){
+    const list = $('historyList');
+    const h = loadHistory();
+    list.innerHTML = "";
+    if(!h.length){
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = "Copied prompts appear here. Tap one to restore it.";
+      list.appendChild(li);
+      return;
+    }
+    h.forEach(item => {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.className = 'h-item';
+      const badge = document.createElement('span');
+      badge.className = 'h-badge';
+      badge.textContent = (TARGETS[item.t] || TARGETS.universal).label;
+      const txt = document.createElement('span');
+      txt.className = 'h-text';
+      txt.textContent = item.p;
+      b.title = item.p;
+      b.append(badge, txt);
+      b.addEventListener('click', () => {
+        restore(item.snap);
+        renderVibes(); renderTargets(); renderParams(); renderIngredients(); renderOutput(); saveState();
+        flash("restored");
+        window.scrollTo({ top:0, behavior:"smooth" });
+      });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+  }
+
+  /* ---------- clipboard ---------- */
+  async function copyText(text){
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch(err){
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch(e2){ return false; }
+    }
+  }
+  let flashTimer;
+  function flash(msg){
+    const f = $('copyFeedback');
+    f.textContent = msg; f.classList.add('show');
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => f.classList.remove('show'), 1600);
+  }
+  async function copyPrompt(){
+    const { prompt } = build();
+    const ok = await copyText(prompt);
+    flash(ok ? "copied to clipboard" : "select the text to copy");
+    addHistory(prompt);
+  }
+
+  /* ---------- theme ---------- */
+  const THEMES = ["auto","light","dark"];
+  function applyTheme(t){
+    if(t === "auto") document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', t);
+    $('themeBtn').title = "Theme: " + t;
+    $('themeBtn').textContent = t === "light" ? "☀" : t === "dark" ? "☾" : "◐";
+  }
+  let theme = "auto";
+  try { theme = localStorage.getItem("atmospherium.theme") || "auto"; } catch(e){}
+  applyTheme(theme);
+  $('themeBtn').addEventListener('click', () => {
+    theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+    applyTheme(theme);
+    try { localStorage.setItem("atmospherium.theme", theme); } catch(e){}
+  });
+
+  /* ---------- events ---------- */
+  $('subjectInput').addEventListener('input', e => { state.subject = e.target.value; renderOutput(); });
+  $('subjectInput').addEventListener('change', saveState);
+  function randomSubject(){
+    state.subject = randomFrom(SUBJECTS.filter(s => s !== state.subject));
+    $('subjectInput').value = state.subject;
+    renderOutput(); saveState();
+  }
+  $('subjectDice').addEventListener('click', randomSubject);
+  $('rerollAllBtn').addEventListener('click', rerollAll);
+  $('unlockAllBtn').addEventListener('click', () => { state.locked = {}; renderIngredients(); saveState(); });
+  CONTROLS.forEach(id => {
+    $(id).addEventListener(id === 'avoidInput' ? 'input' : 'change', () => { renderOutput(); saveState(); });
+  });
+  $('copyBtn').addEventListener('click', copyPrompt);
+  $('copyNegBtn').addEventListener('click', async () => {
+    const ok = await copyText(build().negative);
+    flash(ok ? "negative copied" : "select the text to copy");
+  });
+  $('shareBtn').addEventListener('click', async () => {
+    let base = location.href.split('#')[0];
+    const link = base + '#b=' + encode(snapshot());
+    const ok = await copyText(link);
+    flash(ok ? "share link copied" : "couldn't copy link");
+  });
+  $('clearHistoryBtn').addEventListener('click', () => { saveHistory([]); renderHistory(); });
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || "").toLowerCase();
+    if(tag === "input" || tag === "select" || tag === "textarea" || e.target.isContentEditable) return;
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if(k === "r"){ e.preventDefault(); rerollAll(); }
+    else if(k === "c"){ e.preventDefault(); copyPrompt(); }
+    else if(k === "s"){ e.preventDefault(); randomSubject(); }
+  });
+
+  /* ---------- init ---------- */
+  let loaded = false;
+  try {
+    const m = location.hash.match(/[#&]b=([^&]+)/);
+    if(m) loaded = restore(decode(decodeURIComponent(m[1])));
+  } catch(e){}
+  if(!loaded){
+    try { const saved = JSON.parse(localStorage.getItem(STORE_KEY)); if(saved) loaded = restore(saved); } catch(e){}
+  }
+  if(!loaded) ROWS.forEach(rerollRow);
+  renderVibes(); renderTargets(); renderParams(); renderIngredients(); renderOutput(); renderHistory(); saveState();
+})();
+</script>
+</body>
+</html>
